@@ -1,14 +1,14 @@
 package main
 
 import (
-  "fmt"
+	"fmt"
 
-  "github.com/github-trending/github-trending"
+	"github.com/github-trending/github-trending"
 )
 
 func main() {
-  fmt.Println(trending.Today().Repos())
-  // fmt.Println(trending.ThisWeek().Repos())
-  // fmt.Println(trending.ThisMonth().Repos())
-  // fmt.Println(trending.Repos())
+	fmt.Println(trending.Today().Repos())
+	// fmt.Println(trending.ThisWeek().Repos())
+	// fmt.Println(trending.ThisMonth().Repos())
+	// fmt.Println(trending.Repos())
 }

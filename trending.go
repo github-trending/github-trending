@@ -2,6 +2,8 @@
 package trending
 
 import (
+	"errors"
+	"fmt"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -117,6 +119,10 @@ func (t *Trending) request(u string) (*goquery.Document, error) {
 
 	if err != nil {
 		return nil, err
+	}
+
+	if response.StatusCode != 200 {
+		return nil, errors.New(fmt.Sprintf("Get %s returned status %d", response.Request.URL.String(), response.StatusCode))
 	}
 
 	doc, err := goquery.NewDocumentFromReader(response.Body)

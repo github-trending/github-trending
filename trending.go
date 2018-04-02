@@ -18,6 +18,12 @@ const (
 	trendingPathname = "/trending"
 )
 
+var TimeSpan = [3]string{
+	"daily",
+	"weekly",
+	"monthly",
+}
+
 // Repository reflects a single trending repository.
 type Repository struct {
 	Title           string

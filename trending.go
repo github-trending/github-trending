@@ -16,15 +16,15 @@ import (
 const (
 	defaultBaseURL   = "https://github.com"
 	trendingPathname = "/trending"
-	Today            = "daily"
-	ThisWeek         = "weekly"
-	ThisMonth        = "monthly"
+	today            = "daily"
+	thisWeek         = "weekly"
+	thisMonth        = "monthly"
 )
 
 var SupportedTimeSpan = [3]string{
-	Today,
-	ThisWeek,
-	ThisMonth,
+	today,
+	thisWeek,
+	thisMonth,
 }
 
 // Repository reflects a single trending repository.

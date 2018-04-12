@@ -158,3 +158,50 @@ func TestTrending_Repos(t *testing.T) {
 		t.Errorf("Trending.Repos() = %v, want %v", got, want)
 	}
 }
+
+func TestTrending_FormatURL(t *testing.T) {
+	BaseURL, _ := url.Parse(defaultBaseURL)
+
+	type fields struct {
+		timeSpan string
+		BaseURL  *url.URL
+		Client   *http.Client
+	}
+
+	type args struct {
+		since    string
+		language string
+	}
+
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    string
+		wantErr bool
+	}{
+		{ "today's repos", fields{"daily", BaseURL, http.DefaultClient}, args{"daily", ""}, "https://github.com/trending?since=daily", false },
+		{ "today's repos of go", fields{"daily", BaseURL, http.DefaultClient}, args{"daily", "go"}, "https://github.com/trending/go?since=daily", false },
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			trending := &Trending{
+				timeSpan: tt.fields.timeSpan,
+				BaseURL:  tt.fields.BaseURL,
+				Client:   tt.fields.Client,
+			}
+
+			got, err := trending.FormatURL(tt.args.since, tt.args.language)
+
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Trending.FormatURL() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			if got != tt.want {
+				t.Errorf("Trending.FormatURL() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

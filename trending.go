@@ -81,7 +81,7 @@ func (t *Trending) Repos() ([]Repository, error) {
 		ts = "daily"
 	}
 
-	u, err := t.formatURL(ts, "")
+	u, err := t.FormatURL(ts, "")
 
 	if err != nil {
 		return repositories, err
@@ -98,7 +98,8 @@ func (t *Trending) Repos() ([]Repository, error) {
 	return repositories, nil
 }
 
-func (t *Trending) formatURL(since string, language string) (string, error) {
+// FormatURL return a formatted, correct url of trending page.
+func (t *Trending) FormatURL(since string, language string) (string, error) {
 	pathname := trendingPathname
 
 	if language != "" {

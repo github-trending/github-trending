@@ -30,14 +30,25 @@ func shutdown() {
 	server.Close()
 }
 
-func TestNew(t *testing.T) {
-	BaseURL, _ := url.Parse(defaultBaseURL)
+func newTrending(timeSpan, language string) *Trending {
+	trending := New()
 
+	u, _ := url.Parse(defaultBaseURL)
+
+	trending.BaseURL = u
+	trending.Client = http.DefaultClient
+	trending.timeSpan = timeSpan
+	trending.language = language
+
+	return trending
+}
+
+func TestNew(t *testing.T) {
 	tests := []struct {
 		name string
 		want *Trending
 	}{
-		{"default", &Trending{"", BaseURL, http.DefaultClient}},
+		{"default", newTrending("", "")},
 	}
 
 	for _, tt := range tests {
@@ -50,8 +61,6 @@ func TestNew(t *testing.T) {
 }
 
 func TestNewWithClient(t *testing.T) {
-	BaseURL, _ := url.Parse(defaultBaseURL)
-
 	type args struct {
 		c *http.Client
 	}
@@ -61,7 +70,7 @@ func TestNewWithClient(t *testing.T) {
 		args args
 		want *Trending
 	}{
-		{"default", args{http.DefaultClient}, &Trending{"", BaseURL, http.DefaultClient}},
+		{"default", args{http.DefaultClient}, newTrending("", "")},
 	}
 
 	for _, tt := range tests {
@@ -78,6 +87,7 @@ func TestTrending_Since(t *testing.T) {
 
 	type fields struct {
 		timeSpan string
+		language string
 		BaseURL  *url.URL
 		Client   *http.Client
 	}
@@ -92,24 +102,67 @@ func TestTrending_Since(t *testing.T) {
 		args   args
 		want   *Trending
 	}{
-		{"today", fields{"", BaseURL, http.DefaultClient}, args{"daily"}, &Trending{"daily", BaseURL, http.DefaultClient}},
-		{"this week", fields{"", BaseURL, http.DefaultClient}, args{"weekly"}, &Trending{"weekly", BaseURL, http.DefaultClient}},
-		{"this month", fields{"", BaseURL, http.DefaultClient}, args{"monthly"}, &Trending{"monthly", BaseURL, http.DefaultClient}},
-		{"set to today", fields{"weekly", BaseURL, http.DefaultClient}, args{"daily"}, &Trending{"daily", BaseURL, http.DefaultClient}},
-		{"set to this week", fields{"monthly", BaseURL, http.DefaultClient}, args{"weekly"}, &Trending{"weekly", BaseURL, http.DefaultClient}},
-		{"set to this month", fields{"daily", BaseURL, http.DefaultClient}, args{"monthly"}, &Trending{"monthly", BaseURL, http.DefaultClient}},
+		{"today", fields{"", "", BaseURL, http.DefaultClient}, args{"daily"}, newTrending("daily", "")},
+		{"this week", fields{"", "", BaseURL, http.DefaultClient}, args{"weekly"}, newTrending("weekly", "")},
+		{"this month", fields{"", "", BaseURL, http.DefaultClient}, args{"monthly"}, newTrending("monthly", "")},
+		{"set to today", fields{"weekly", "", BaseURL, http.DefaultClient}, args{"daily"}, newTrending("daily", "")},
+		{"set to this week", fields{"monthly", "", BaseURL, http.DefaultClient}, args{"weekly"}, newTrending("weekly", "")},
+		{"set to this month", fields{"daily", "", BaseURL, http.DefaultClient}, args{"monthly"}, newTrending("monthly", "")},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			trending := &Trending{
 				timeSpan: tt.fields.timeSpan,
+				language: tt.fields.language,
 				BaseURL:  tt.fields.BaseURL,
 				Client:   tt.fields.Client,
 			}
 
 			if got := trending.Since(tt.args.ts); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("Trending.Since() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestTrending_WithLanguage(t *testing.T) {
+	BaseURL, _ := url.Parse(defaultBaseURL)
+
+	type fields struct {
+		timeSpan string
+		language string
+		BaseURL  *url.URL
+		Client   *http.Client
+	}
+
+	type args struct {
+		lang string
+	}
+
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   *Trending
+	}{
+		{"today", fields{"daily", "", BaseURL, http.DefaultClient}, args{"go"}, newTrending("daily", "go")},
+		{"this week", fields{"weekly", "", BaseURL, http.DefaultClient}, args{"go"}, newTrending("weekly", "go")},
+		{"this month", fields{"monthly", "", BaseURL, http.DefaultClient}, args{"go"}, newTrending("monthly", "go")},
+		{"set to golang", fields{"daily", "javascript", BaseURL, http.DefaultClient}, args{"go"}, newTrending("daily", "go")},
+		{"set to javascript", fields{"daily", "go", BaseURL, http.DefaultClient}, args{"javascript"}, newTrending("daily", "javascript")},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			trending := &Trending{
+				timeSpan: tt.fields.timeSpan,
+				language: tt.fields.language,
+				BaseURL:  tt.fields.BaseURL,
+				Client:   tt.fields.Client,
+			}
+			if got := trending.WithLanguage(tt.args.lang); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Trending.WithLanguage() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -164,6 +217,7 @@ func TestTrending_FormatURL(t *testing.T) {
 
 	type fields struct {
 		timeSpan string
+		language string
 		BaseURL  *url.URL
 		Client   *http.Client
 	}
@@ -180,14 +234,16 @@ func TestTrending_FormatURL(t *testing.T) {
 		want    string
 		wantErr bool
 	}{
-		{ "today's repos", fields{"daily", BaseURL, http.DefaultClient}, args{"daily", ""}, "https://github.com/trending?since=daily", false },
-		{ "today's repos of go", fields{"daily", BaseURL, http.DefaultClient}, args{"daily", "go"}, "https://github.com/trending/go?since=daily", false },
+		{"today's repos", fields{"daily", "", BaseURL, http.DefaultClient}, args{"daily", ""}, "https://github.com/trending?since=daily", false},
+		{"today's repos of go", fields{"daily", "", BaseURL, http.DefaultClient}, args{"daily", "go"}, "https://github.com/trending/go?since=daily", false},
+		{"this week's repos of go", fields{"weekly", "javascript", BaseURL, http.DefaultClient}, args{"weekly", "go"}, "https://github.com/trending/go?since=weekly", false},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			trending := &Trending{
 				timeSpan: tt.fields.timeSpan,
+				language: tt.fields.language,
 				BaseURL:  tt.fields.BaseURL,
 				Client:   tt.fields.Client,
 			}

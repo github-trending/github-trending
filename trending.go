@@ -41,6 +41,7 @@ type Repository struct {
 
 type Trending struct {
 	timeSpan string
+	language string
 	BaseURL  *url.URL
 	Client   *http.Client
 }
@@ -70,6 +71,14 @@ func (t *Trending) Since(ts string) *Trending {
 	return t
 }
 
+// WithLanguage allows set a specified language.
+// it supports by GitHub(https://github.com/trending).
+func (t *Trending) WithLanguage(lang string) *Trending {
+	t.language = lang
+
+	return t
+}
+
 // Repos returns a slice of fetched trending repositories.
 func (t *Trending) Repos() ([]Repository, error) {
 	var repositories []Repository
@@ -81,7 +90,7 @@ func (t *Trending) Repos() ([]Repository, error) {
 		ts = "daily"
 	}
 
-	u, err := t.FormatURL(ts, "")
+	u, err := t.FormatURL(ts, t.language)
 
 	if err != nil {
 		return repositories, err

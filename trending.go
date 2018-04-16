@@ -170,7 +170,7 @@ func (t *Trending) separateRepos(doc *goquery.Document) []Repository {
 		stars, _ := strconv.Atoi(strings.Replace(starsStr, ",", "", -1))
 
 		additionalStarsText := strings.TrimSpace(s.Find("div.f6 span.float-sm-right").Text())
-		additionalStarsStr := regexp.MustCompile("[0-9]+").FindString(additionalStarsText)
+		additionalStarsStr := regexp.MustCompile("[0-9]+").FindString(strings.Replace(additionalStarsText, ",", "", -1))
 		additionalStars, _ := strconv.Atoi(additionalStarsStr)
 
 		repositoryURLStr, exists := s.Find("h3 a").First().Attr("href")
